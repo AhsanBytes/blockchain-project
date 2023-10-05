@@ -3,11 +3,11 @@
 const express = require('express');
 const cron = require('node-cron');
 const cors = require('cors');
-
+const contract =require('./Contract/index.js')
 const bodyParser = require('body-parser');
 const app = express();
 app.use(bodyParser.json());
-
+const contractAddress = "0xf30340148c22f07e5da8abb7e3b63af90e9ea346";
 const { get_Name, get_Token, get_ID, get_Desc, get_balance,get_all} = require('./controller/index');
 const {fetchDataAndStore} = require('./cron-job');
 
@@ -24,6 +24,44 @@ cron.schedule('* * * * *', () => {
 app.use(cors());
 // app.use(express.json())
 // app.use('/api/ethereum',tasks)
+
+app.post('/update-name', async (req, res) => {
+
+  res.json({ contract });
+
+ // try {
+    const { newName, userAddress } = req.body;
+    // Generate the transaction here, including estimating gas, encoding data, etc.
+
+    
+    const gasAmount = await contract.methods.set_Name(newName).estimateGas({ from: userAddress });
+    const data = contract.methods.set_Name(newName).encodeABI();
+    const transaction = {
+      from: userAddress,
+      to: contractAddress,
+      data: data,
+      gasLimit: gasAmount,
+    };
+    res.json({ transaction });
+ // } catch (error) {
+ //   console.error('Error generating transaction:', error);
+ //   res.status(500).json({ error: 'Internal server error' });
+ // }
+});
+
+app.post('/broadcast-signed-transaction', async (req, res) => {
+  try {
+    const { signedTransaction } = req.body;
+    const receipt = await web3.eth.sendSignedTransaction(signedTransaction.rawTransaction);
+    res.json({ transactionHash: receipt.transactionHash });
+  } catch (error) {
+    console.error('Error broadcasting transaction:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+
+
 
 
 app.post('/generate-unsigned-transaction', async (req, res) => {
