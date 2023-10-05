@@ -60,23 +60,55 @@ const View = () => {
       
       const UpdateName = async () => {
         try {
-            console.log(address)
-          if (contract && address) {
-            const gas = 200000; // Adjust the gas limit as needed
-            const gasPrice = '20000000000'; // Adjust the gas price as needed
-            await contract.methods.set_Name(EditName).send({ 
-                from: tempaddress,
-                gas: gas,
-                gasPrice: gasPrice,
-            });
-            console.log('Name updated successfully');
-          } else {
-            console.error('Contract or account not initialized.');
-          }
+            try {
+                if (window.ethereum) {
+                    const web3 = new Web3(window.ethereum);
+                    const accounts = await window.ethereum.request({
+                        method: "eth_requestAccounts"
+                    });
+                    const contract = new web3.eth.Contract(ABI, contractAddress);
+                    if (contract && accounts[0]) {
+                        contract.methods.set_Name(EditName).estimateGas({ from: accounts[0] })
+                            .then(function (gasAmount) {
+                                const data = contract.methods.set_Name(EditName).encodeABI();
+                                ethereum
+                                    .request({
+                                        method: 'eth_sendTransaction',
+                                        params: [
+                                            {
+                                                from: accounts[0], // User's active address from MetaMask.
+                                                to: contractAddress, // Contract address.
+                                                data: data, // Encoded data for the contract method call.
+                                                gasLimit: gasAmount, // Customizable gas limit.
+                                            },
+                                        ],
+                                    })
+                                    .then((txHash) => console.log(`Transaction Hash: ${txHash}`))
+                                    .catch((error) => console.error(error));
+                            })
+                            .catch(function (error) {
+                                console.log(error);
+                            });
+                        // await contract.methods.set_Name(EditName).send({
+                        //     from: tempaddress,
+                        //     // gas: gas,
+                        //     // gasPrice: gasPrice,
+                        // });
+                        console.log('Name updated successfully');
+                    } else {
+                        console.error('Contract or account not initialized.');
+                    }
+
+                } else {
+                    throw new Error
+                }
+            } catch (error) {
+                console.error(error)
+            }
         } catch (error) {
-          console.error('Error:', error);
+            console.error('Error:', error);
         }
-      };
+    };
       const Updatebalance= async ()=>{
 
       }
