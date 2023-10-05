@@ -3,13 +3,14 @@
 const express = require('express');
 const cron = require('node-cron');
 const cors = require('cors');
-const contract =require('./Contract/index.js')
+const {contract}=require('./Contract/index');
 const bodyParser = require('body-parser');
 const app = express();
 app.use(bodyParser.json());
-const contractAddress = "0xf30340148c22f07e5da8abb7e3b63af90e9ea346";
 const { get_Name, get_Token, get_ID, get_Desc, get_balance,get_all} = require('./controller/index');
 const {fetchDataAndStore} = require('./cron-job');
+const contractAddress = "0xf30340148c22f07e5da8abb7e3b63af90e9ea346";
+
 
 cron.schedule('* * * * *', () => {
     console.log('Fetching data and updating database...');
@@ -27,26 +28,37 @@ app.use(cors());
 
 app.post('/update-name', async (req, res) => {
 
-  res.json({ contract });
-
- // try {
+ try {
     const { newName, userAddress } = req.body;
-    // Generate the transaction here, including estimating gas, encoding data, etc.
-
+    //Generate the transaction here, including estimating gas, encoding data, etc.
     
     const gasAmount = await contract.methods.set_Name(newName).estimateGas({ from: userAddress });
-    const data = contract.methods.set_Name(newName).encodeABI();
-    const transaction = {
-      from: userAddress,
-      to: contractAddress,
-      data: data,
-      gasLimit: gasAmount,
-    };
-    res.json({ transaction });
- // } catch (error) {
- //   console.error('Error generating transaction:', error);
- //   res.status(500).json({ error: 'Internal server error' });
- // }
+  //  const data = contract.methods.set_Name(newName).encodeABI();
+    // ethereum
+    //   .request({
+    //       method: 'eth_sendTransaction',
+    //       params: [
+    //           {
+    //               from: accounts[0], // User's active address from MetaMask.
+    //               to: contractAddress, // Contract address.
+    //               data: data, // Encoded data for the contract method call.
+    //               gasLimit: gasAmount, // Customizable gas limit.
+    //           },
+    //       ],
+    //   })
+    //   .then((txHash) => console.log(`Transaction Hash: ${txHash}`))
+    //   .catch((error) => console.error(error));
+  //  const transaction = {
+  //    from: userAddress,
+  //    to: contractAddress,
+  //    data: data,
+  //    gasLimit: gasAmount,
+  //  };
+    res.json({ name });
+ } catch (error) {
+   console.error('Error generating transaction:', error);
+   res.status(500).json({ error: 'Internal server error' });
+ }
 });
 
 app.post('/broadcast-signed-transaction', async (req, res) => {

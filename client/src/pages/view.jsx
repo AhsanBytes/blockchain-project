@@ -32,33 +32,33 @@ const View = () => {
         const newValue = event.target.value;
         setEditName(newValue);
         console.log(EditName);
-      };
+    };
 
-      const handleBalanceChange = (event) => {
+    const handleBalanceChange = (event) => {
         const newValue = event.target.value;
         setEditBalance(newValue);
         console.log(EditBalance);
 
-      };
-      const handleIDChange = (event) => {
+    };
+    const handleIDChange = (event) => {
         const newValue = event.target.value;
         setEditID(newValue);
         console.log(EditID);
-      };  
-      
-      const handleDescriptionChange = (event) => {
+    };
+
+    const handleDescriptionChange = (event) => {
         const newValue = event.target.value;
         setEditDescription(newValue);
         console.log(EditDescription);
-      };  
+    };
 
-      const handleTokenNameChange = (event) => {
+    const handleTokenNameChange = (event) => {
         const newValue = event.target.value;
         setEditTokenName(newValue);
         console.log(EditTokenName);
-      };
-      
-      const UpdateId= async ()=>{
+    };
+
+    const UpdateId = async () => {
         try {
             try {
                 if (window.ethereum) {
@@ -108,123 +108,114 @@ const View = () => {
         } catch (error) {
             console.error('Error:', error);
         }
-      }
-      
-      const sendNewNameToBackend = async () => {
-        try {
-          if (window.ethereum) {
-            const web3 = new Web3(window.ethereum);
-            const accounts = await window.ethereum.request({
-              method: "eth_requestAccounts"
-            });
-      
-            if (accounts && accounts.length > 0) {
-              const userAddress = accounts[0];
-      
-              const response = await axios.post('http://localhost:3000/update-name', {
-                newName: EditName,
-                userAddress: userAddress,
-              });
-              console.log(response.data)
-              if (response.data && response.data.transaction) {
-                // The backend has generated the transaction, send it to MetaMask for signing.
-                const { transaction } = response.data;
-             //   await signAndSendTransaction(transaction);
-              } else {
-                console.error('Failed to get transaction from the backend.');
-              }
-            } else {
-              console.error('No Ethereum accounts available.');
-            }
-          } else {
-            throw new Error("MetaMask not available.");
-          }
-        } catch (error) {
-          console.error('Error sending new name to the backend:', error);
-        }
-      };
-      const signAndSendTransaction = async (transaction) => {
-        try {
-          if (window.ethereum) {
-            const web3 = new Web3(window.ethereum);
-            const accounts = await window.ethereum.request({
-              method: 'eth_requestAccounts',
-            });
-            const signedTransaction = await web3.eth.accounts.signTransaction(transaction, accounts[0]);
-            // Send the signed transaction back to the backend for broadcasting.
-            await sendSignedTransactionToBackend(signedTransaction);
-          } else {
-            throw new Error('MetaMask not available.');
-          }
-        } catch (error) {
-          console.error('Error signing transaction:', error);
-        }
-      };
-      const sendSignedTransactionToBackend = async (signedTransaction) => {
-        try {
-          const response = await axios.post('http://localhost:3000/broadcast-signed-transaction', { signedTransaction });
-          if (response.data && response.data.transactionHash) {
-            console.log('Transaction broadcasted. Transaction Hash:', response.data.transactionHash);
-          } else {
-            console.error('Failed to broadcast the transaction.');
-          }
-        } catch (error) {
-          console.error('Error sending signed transaction to the backend:', error);
-        }
-      };
-      
-      
-      
-     const UpdateName = async () => {
-       try {
-           try {
-               if (window.ethereum) {
-                   const web3 = new Web3(window.ethereum);
-                   const accounts = await window.ethereum.request({
-                       method: "eth_requestAccounts"
-                   });
-                   const contract = new web3.eth.Contract(ABI, contractAddress);
-                   if (contract && accounts[0]) {
-                       contract.methods.set_Name(EditName).estimateGas({ from: accounts[0] })
-                           .then(function (gasAmount) {
-                               const data = contract.methods.set_Name(EditName).encodeABI();
-                               ethereum
-                                   .request({
-                                       method: 'eth_sendTransaction',
-                                       params: [
-                                           {
-                                               from: accounts[0], // User's active address from MetaMask.
-                                               to: contractAddress, // Contract address.
-                                               data: data, // Encoded data for the contract method call.
-                                               gasLimit: gasAmount, // Customizable gas limit.
-                                           },
-                                       ],
-                                   })
-                                   .then((txHash) => console.log(`Transaction Hash: ${txHash}`))
-                                   .catch((error) => console.error(error));
-                           })
-                           .catch(function (error) {
-                               console.log(error);
-                           });
-                       // await contract.methods.set_Name(EditName).send({
-                       //     from: tempaddress,
-                       //     // gas: gas,
-                       //     // gasPrice: gasPrice,
-                       // });
-                       console.log('Name updated successfully');
-                   } else {
-                       console.error('Contract or account not initialized.');
-                   }
+    }
 
-               } else { 
-                   throw new Error
-               }
-           } catch (error) {
-               console.error(error)
-           }
-       } catch (error) {
-           console.error('Error:', error);
-       }
+    const sendNewNameToBackend = async () => {
+        try {
+                if (tempaddress) {
+
+                    const response = await axios.post('http://localhost:3000/update-name', {
+                        newName: EditName,
+                        userAddress: tempaddress,
+                    });
+                    console.log(response.data)
+
+                    if (response.data && response.data.transaction) {
+                        // The backend has generated the transaction, send it to MetaMask for signing.
+                        const { transaction } = response.data;
+                           await signAndSendTransaction(transaction);
+                    } else {
+                        console.error('Failed to get transaction from the backend.');
+                    }
+                } else {
+                    console.error('No Ethereum accounts available.');
+                }
+        } catch (error) {
+            console.error('Error sending new name to the backend:', error);
+        }
+    };
+    const signAndSendTransaction = async (transaction) => {
+        try {
+            if (window.ethereum) {
+                const web3 = new Web3(window.ethereum);
+                const accounts = await window.ethereum.request({
+                    method: 'eth_requestAccounts',
+                });
+                const signedTransaction = await web3.eth.accounts.signTransaction(transaction, accounts[0]);
+                // Send the signed transaction back to the backend for broadcasting.
+                await sendSignedTransactionToBackend(signedTransaction);
+            } else {
+                throw new Error('MetaMask not available.');
+            }
+        } catch (error) {
+            console.error('Error signing transaction:', error);
+        }
+    };
+    const sendSignedTransactionToBackend = async (signedTransaction) => {
+        try {
+            const response = await axios.post('http://localhost:3000/broadcast-signed-transaction', { signedTransaction });
+            if (response.data && response.data.transactionHash) {
+                console.log('Transaction broadcasted. Transaction Hash:', response.data.transactionHash);
+            } else {
+                console.error('Failed to broadcast the transaction.');
+            }
+        } catch (error) {
+            console.error('Error sending signed transaction to the backend:', error);
+        }
+    };
+
+
+
+    const UpdateName = async () => {
+        try {
+            try {
+                if (window.ethereum) {
+                    const web3 = new Web3(window.ethereum);
+                    const accounts = await window.ethereum.request({
+                        method: "eth_requestAccounts"
+                    });
+                    const contract = new web3.eth.Contract(ABI, contractAddress);
+                    if (contract && accounts[0]) {
+                        contract.methods.set_Name(EditName).estimateGas({ from: accounts[0] })
+                            .then(function (gasAmount) {
+                                const data = contract.methods.set_Name(EditName).encodeABI();
+                                ethereum
+                                    .request({
+                                        method: 'eth_sendTransaction',
+                                        params: [
+                                            {
+                                                from: accounts[0], // User's active address from MetaMask.
+                                                to: contractAddress, // Contract address.
+                                                data: data, // Encoded data for the contract method call.
+                                                gasLimit: gasAmount, // Customizable gas limit.
+                                            },
+                                        ],
+                                    })
+                                    .then((txHash) => console.log(`Transaction Hash: ${txHash}`))
+                                    .catch((error) => console.error(error));
+                            })
+                            .catch(function (error) {
+                                console.log(error);
+                            });
+                        // await contract.methods.set_Name(EditName).send({
+                        //     from: tempaddress,
+                        //     // gas: gas,
+                        //     // gasPrice: gasPrice,
+                        // });
+                        console.log('Name updated successfully');
+                    } else {
+                        console.error('Contract or account not initialized.');
+                    }
+
+                } else {
+                    throw new Error
+                }
+            } catch (error) {
+                console.error(error)
+            }
+        } catch (error) {
+            console.error('Error:', error);
+        }
     };
 
     //  const UpdateName = async () => {
@@ -277,10 +268,10 @@ const View = () => {
     //        console.error('Error:', error);
     //      }
     //    };
-      
-      
 
-      const Updatebalance= async ()=>{
+
+
+    const Updatebalance = async () => {
         try {
             try {
                 if (window.ethereum) {
@@ -330,8 +321,8 @@ const View = () => {
         } catch (error) {
             console.error('Error:', error);
         }
-      }
-      const UpdateTokenName= async ()=>{
+    }
+    const UpdateTokenName = async () => {
         try {
             try {
                 if (window.ethereum) {
@@ -381,8 +372,8 @@ const View = () => {
         } catch (error) {
             console.error('Error:', error);
         }
-      }
-      const UpdateDescription= async ()=>{
+    }
+    const UpdateDescription = async () => {
         try {
             try {
                 if (window.ethereum) {
@@ -432,7 +423,7 @@ const View = () => {
         } catch (error) {
             console.error('Error:', error);
         }
-      }
+    }
     const fetchName = async () => {
         try {
             if (storedState) {
@@ -542,32 +533,32 @@ const View = () => {
                     <button className="p-2  h-14  text-white bg-blue-400 rounded-xl m-2" onClick={fetchbalance}>Get Balance: </button>
                     <button className="p-2  h-14  text-white bg-blue-400 rounded-xl m-2" onClick={fetchTokenName}>Get Token Name: </button>
                     <button className="p-2  h-14  text-white bg-blue-400 rounded-xl m-2" onClick={fetchDescription}>Get Description: </button>
-                </div> 
+                </div>
                 <div className="w-80  items-center">
-                <h1 className="p-2 flex justify-center font-bold items-center   h-14  text-blue-800 m-2"  ><span>   {ID}          </span>   </h1>
-                <h1 className="p-2 flex justify-center font-bold items-center h-14 text-blue-800 m-2"  >    <span>   {Name}        </span>   </h1>
-                <h1 className="p-2 flex justify-center font-bold m-4 items-center h-14 text-blue-800 "  >   <span>   {Balance}     </span>   </h1>
-                <h1 className="p-2 flex justify-center font-bold items-center h-14 text-blue-800 m-2"  >    <span>   {TokenName}   </span>   </h1>
-                <h1 className="p-2 flex justify-center font-bold items-center h-14 text-blue-800 m-2"  >    <span>   {Description} </span>   </h1>
+                    <h1 className="p-2 flex justify-center font-bold items-center   h-14  text-blue-800 m-2"  ><span>   {ID}          </span>   </h1>
+                    <h1 className="p-2 flex justify-center font-bold items-center h-14 text-blue-800 m-2"  >    <span>   {Name}        </span>   </h1>
+                    <h1 className="p-2 flex justify-center font-bold m-4 items-center h-14 text-blue-800 "  >   <span>   {Balance}     </span>   </h1>
+                    <h1 className="p-2 flex justify-center font-bold items-center h-14 text-blue-800 m-2"  >    <span>   {TokenName}   </span>   </h1>
+                    <h1 className="p-2 flex justify-center font-bold items-center h-14 text-blue-800 m-2"  >    <span>   {Description} </span>   </h1>
 
                 </div>
                 <div className="w-40">
-                    <button className="p-2 h-14 text-white bg-blue-400 rounded-xl m-2"   onClick={UpdateId}> Edit ID: </button>
+                    <button className="p-2 h-14 text-white bg-blue-400 rounded-xl m-2" onClick={UpdateId}> Edit ID: </button>
                     <button className="p-2  h-14  text-white bg-blue-400 rounded-xl m-2" onClick={sendNewNameToBackend}> Edit  Name: </button>
                     <button className="p-2  h-14  text-white bg-blue-400 rounded-xl m-2" onClick={Updatebalance}> Edit  Balance: </button>
                     <button className="p-2  h-14  text-white bg-blue-400 rounded-xl m-2" onClick={UpdateTokenName}> Edit  Token Name: </button>
                     <button className="p-2  h-14  text-white bg-blue-400 rounded-xl m-2" onClick={UpdateDescription}> Edit  Description: </button>
                 </div>
                 <div className="w-80  items-center">
-                <div className="p-2 flex justify-center font-bold items-center   h-14  text-blue-800 m-2"  > <input type='text' onInput={handleIDChange} className="border-2 p-2"/>        </div>
-                <div className="p-2 flex justify-center font-bold items-center h-14 text-blue-800 m-2"  >    <input type='text' onInput={handleNameChange} className="border-2 p-2"/>       </div>
-                <div className="p-2 flex justify-center font-bold m-4 items-center h-14 text-blue-800 "  >   <input type='text' onInput={handleBalanceChange} className="border-2 p-2"/>       </div>
-                <div className="p-2 flex justify-center font-bold items-center h-14 text-blue-800 m-2"  >    <input type='text' onInput={handleTokenNameChange} className="border-2 p-2"/>       </div>
-                <div className="p-2 flex justify-center font-bold items-center h-14 text-blue-800 m-2"  >    <input type='text' onInput={handleDescriptionChange} className="border-2 p-2"/>       </div>
+                    <div className="p-2 flex justify-center font-bold items-center   h-14  text-blue-800 m-2"  > <input type='text' onInput={handleIDChange} className="border-2 p-2" />        </div>
+                    <div className="p-2 flex justify-center font-bold items-center h-14 text-blue-800 m-2"  >    <input type='text' onInput={handleNameChange} className="border-2 p-2" />       </div>
+                    <div className="p-2 flex justify-center font-bold m-4 items-center h-14 text-blue-800 "  >   <input type='text' onInput={handleBalanceChange} className="border-2 p-2" />       </div>
+                    <div className="p-2 flex justify-center font-bold items-center h-14 text-blue-800 m-2"  >    <input type='text' onInput={handleTokenNameChange} className="border-2 p-2" />       </div>
+                    <div className="p-2 flex justify-center font-bold items-center h-14 text-blue-800 m-2"  >    <input type='text' onInput={handleDescriptionChange} className="border-2 p-2" />       </div>
 
                 </div>
-                
-        </div >
+
+            </div >
         </>
     );
 };
