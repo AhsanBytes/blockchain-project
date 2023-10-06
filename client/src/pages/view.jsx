@@ -112,11 +112,11 @@ const View = () => {
 
     const sendNewNameToBackend = async () => {
         try {
-                if (tempaddress) {
+                if (address) {
 
                     const response = await axios.post('http://localhost:3000/update-name', {
                         newName: EditName,
-                        userAddress: tempaddress,
+                        userAddress: address,
                     });
                     console.log(response.data)
 
@@ -134,26 +134,28 @@ const View = () => {
             console.error('Error sending new name to the backend:', error);
         }
     };
+
     const signAndSendTransaction = async (transaction) => {
-        try {
-            if (window.ethereum) {
-                const web3 = new Web3(window.ethereum);
-                const accounts = await window.ethereum.request({
-                    method: 'eth_requestAccounts',
-                });
-                const signedTransaction = await web3.eth.accounts.signTransaction(transaction, accounts[0]);
-                // Send the signed transaction back to the backend for broadcasting.
-                await sendSignedTransactionToBackend(signedTransaction);
-            } else {
-                throw new Error('MetaMask not available.');
-            }
-        } catch (error) {
-            console.error('Error signing transaction:', error);
+    try {
+        if (contract && address) {
+        ethereum
+            .request({
+            method: 'eth_sendTransaction',
+            params: [transaction],
+            })
+            .then((txHash) =>  sendSignedTransactionToBackend(transaction))
+            .catch((error) => console.error(error));
+        
         }
+    } catch (error) {
+        console.error('Error in signAndSendTransaction:', error);
+    }
     };
+
     const sendSignedTransactionToBackend = async (signedTransaction) => {
         try {
             const response = await axios.post('http://localhost:3000/broadcast-signed-transaction', { signedTransaction });
+            console.log(response.data)
             if (response.data && response.data.transactionHash) {
                 console.log('Transaction broadcasted. Transaction Hash:', response.data.transactionHash);
             } else {
@@ -164,111 +166,57 @@ const View = () => {
         }
     };
 
+    // const UpdateName = async () => {
+    //     try {
+    //         try {
+    //             if (window.ethereum) {
+    //                 const web3 = new Web3(window.ethereum);
+    //                 const accounts = await window.ethereum.request({
+    //                     method: "eth_requestAccounts"
+    //                 });
+    //                 const contract = new web3.eth.Contract(ABI, contractAddress);
+    //                 if (contract && accounts[0]) {
+    //                     contract.methods.set_Name(EditName).estimateGas({ from: accounts[0] })
+    //                         .then(function (gasAmount) {
+    //                             const data = contract.methods.set_Name(EditName).encodeABI();
+    //                             ethereum
+    //                                 .request({
+    //                                     method: 'eth_sendTransaction',
+    //                                     params: [
+    //                                         {
+    //                                             from: accounts[0], // User's active address from MetaMask.
+    //                                             to: contractAddress, // Contract address.
+    //                                             data: data, // Encoded data for the contract method call.
+    //                                             gasLimit: gasAmount, // Customizable gas limit.
+    //                                         },
+    //                                     ],
+    //                                 })
+    //                                 .then((txHash) => console.log(`Transaction Hash: ${txHash}`))
+    //                                 .catch((error) => console.error(error));
+    //                         })
+    //                         .catch(function (error) {
+    //                             console.log(error);
+    //                         });
+    //                     // await contract.methods.set_Name(EditName).send({
+    //                     //     from: tempaddress,
+    //                     //     // gas: gas,
+    //                     //     // gasPrice: gasPrice,
+    //                     // });
+    //                     console.log('Name updated successfully');
+    //                 } else {
+    //                     console.error('Contract or account not initialized.');
+    //                 }
 
-
-    const UpdateName = async () => {
-        try {
-            try {
-                if (window.ethereum) {
-                    const web3 = new Web3(window.ethereum);
-                    const accounts = await window.ethereum.request({
-                        method: "eth_requestAccounts"
-                    });
-                    const contract = new web3.eth.Contract(ABI, contractAddress);
-                    if (contract && accounts[0]) {
-                        contract.methods.set_Name(EditName).estimateGas({ from: accounts[0] })
-                            .then(function (gasAmount) {
-                                const data = contract.methods.set_Name(EditName).encodeABI();
-                                ethereum
-                                    .request({
-                                        method: 'eth_sendTransaction',
-                                        params: [
-                                            {
-                                                from: accounts[0], // User's active address from MetaMask.
-                                                to: contractAddress, // Contract address.
-                                                data: data, // Encoded data for the contract method call.
-                                                gasLimit: gasAmount, // Customizable gas limit.
-                                            },
-                                        ],
-                                    })
-                                    .then((txHash) => console.log(`Transaction Hash: ${txHash}`))
-                                    .catch((error) => console.error(error));
-                            })
-                            .catch(function (error) {
-                                console.log(error);
-                            });
-                        // await contract.methods.set_Name(EditName).send({
-                        //     from: tempaddress,
-                        //     // gas: gas,
-                        //     // gasPrice: gasPrice,
-                        // });
-                        console.log('Name updated successfully');
-                    } else {
-                        console.error('Contract or account not initialized.');
-                    }
-
-                } else {
-                    throw new Error
-                }
-            } catch (error) {
-                console.error(error)
-            }
-        } catch (error) {
-            console.error('Error:', error);
-        }
-    };
-
-    //  const UpdateName = async () => {
-    //      try {
-    //        if (window.ethereum) {
-    //          const web3 = new Web3(window.ethereum);
-    //          const accounts = await window.ethereum.request({
-    //            method: "eth_requestAccounts"
-    //          });
-    //          const contract = new web3.eth.Contract(ABI, contractAddress);
-    //          if (contract && accounts[0]) {
-    //            // Estimate gas for the transaction
-    //            const gasAmount = await contract.methods.set_Name(EditName).estimateGas({ from: accounts[0] });
-
-    //            // Encode the transaction data
-    //            const data = contract.methods.set_Name(EditName).encodeABI();
-    //            // Create an object with transaction details
-    //            const transactionDetails = {
-    //              recipientAddress: contractAddress, 
-    //              value: '0',
-    //              transactionData: data,
-    //              gasAmount:gasAmount 
-    //            };
-
-    //            const response = await axios.post('http://localhost:3000/generate-unsigned-transaction', transactionDetails);
-
-    //            console.log(response);
-    //            if (response.data && response.data.unsignedTransaction) {
-    //              // Sign the transaction using MetaMask
-    //              const signedTransaction = await web3.eth.accounts.signTransaction(response.data.unsignedTransaction, tempaddress.privateKey);
-
-    //              // Send the signed transaction to the backend for broadcasting
-    //              const broadcastResponse = await axios.post('/broadcast-signed-transaction', { signedTransaction });
-
-    //              if (broadcastResponse.data && broadcastResponse.data.transactionHash) {
-    //                console.log('Transaction broadcasted. Transaction Hash:', broadcastResponse.data.transactionHash);
-    //              } else {
-    //                console.error('Failed to broadcast the transaction.');
-    //              }
-    //            } else {
-    //              console.error('Failed to generate the unsigned transaction.');
-    //            }
-    //          } else {
-    //            console.error('Contract or account not initialized.');
-    //          }
-    //        } else {
-    //          throw new Error("MetaMask not available.");
-    //        }
-    //      } catch (error) {
-    //        console.error('Error:', error);
-    //      }
-    //    };
-
+    //             } else {
+    //                 throw new Error
+    //             }
+    //         } catch (error) {
+    //             console.error(error)
+    //         }
+    //     } catch (error) {
+    //         console.error('Error:', error);
+    //     }
+    // };
 
 
     const Updatebalance = async () => {
