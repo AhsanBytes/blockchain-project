@@ -26,40 +26,78 @@ app.use(cors());
 // app.use(express.json())
 // app.use('/api/ethereum',tasks)
 
-app.post('/update-name', async (req, res) => {
+// app.post('/update-name', async (req, res) => {
 
- try {
-    const { newName, userAddress } = req.body;
-    //Generate the transaction here, including estimating gas, encoding data, etc.
-    
+//  try {
+//     let { newName, userAddress } = req.body;
+//     //Generate the transaction here, including estimating gas, encoding data, etc.
+//     //console.log(newName);
+//    // const gasAmount = await contract.methods.set_Name(newName).estimateGas({ from: userAddress });
+//    //userAddress = req.body.userAddress.toLowerCase(); // Ensure it's lowercase and starts with '0x'
+//    console.log(userAddress);
+//   //userAddress = userAddress.trim();
+//    //const gasAmount = await contract.methods.set_Name(newName).estimateGas({ from: userAddress})
+//    //const gasAmountString = gasAmount.toString(); 
+//    const data = await contract.methods.set_Name(newName).encodeABI();
+//     // ethereum
+//     //   .request({
+//     //       method: 'eth_sendTransaction',
+//     //       params: [
+//     //           {
+//     //               from: accounts[0], // User's active address from MetaMask.
+//     //               to: contractAddress, // Contract address.
+//     //               data: data, // Encoded data for the contract method call.
+//     //               gasLimit: gasAmount, // Customizable gas limit.
+//     //           },
+//     //       ],
+//     //   })
+//     //   .then((txHash) => console.log(`Transaction Hash: ${txHash}`))
+//     //   .catch((error) => console.error(error));
+//    const transaction = {
+//      from: userAddress,
+//      to: contractAddress,
+//      data: data,
+//      gasLimit: 1000000,
+//    };
+//     res.json({ transaction });
+//  } catch (error) {
+//    console.error('Error generating transaction:', error);
+//    res.status(500).json({ error: 'Internal server error' });
+//  }
+// });
+
+app.post('/update-name', async (req, res) => {
+  try {
+    let { newName, userAddress } = req.body;
+
+    // Remove extra characters from userAddress
+    userAddress = userAddress.replace(/"/g, '');
+
+    // Ensure userAddress has '0x' prefix
+    if (!userAddress.startsWith('0x')) {
+      userAddress = '0x' + userAddress;
+    }
+    // Estimate gas
     const gasAmount = await contract.methods.set_Name(newName).estimateGas({ from: userAddress });
-  //  const data = contract.methods.set_Name(newName).encodeABI();
-    // ethereum
-    //   .request({
-    //       method: 'eth_sendTransaction',
-    //       params: [
-    //           {
-    //               from: accounts[0], // User's active address from MetaMask.
-    //               to: contractAddress, // Contract address.
-    //               data: data, // Encoded data for the contract method call.
-    //               gasLimit: gasAmount, // Customizable gas limit.
-    //           },
-    //       ],
-    //   })
-    //   .then((txHash) => console.log(`Transaction Hash: ${txHash}`))
-    //   .catch((error) => console.error(error));
-  //  const transaction = {
-  //    from: userAddress,
-  //    to: contractAddress,
-  //    data: data,
-  //    gasLimit: gasAmount,
-  //  };
-    res.json({ name });
- } catch (error) {
-   console.error('Error generating transaction:', error);
-   res.status(500).json({ error: 'Internal server error' });
- }
+    const gasAmountString = gasAmount.toString();
+    // Encode transaction data
+    const data = await contract.methods.set_Name(newName).encodeABI();
+
+    // Create transaction object
+    const transaction = {
+      from: userAddress,
+      to: contractAddress,
+      data: data,
+      gasLimit: gasAmountString,
+    };
+
+    res.json({ transaction });
+  } catch (error) {
+    console.error('Error generating transaction:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
 });
+
 
 app.post('/broadcast-signed-transaction', async (req, res) => {
   try {
@@ -68,31 +106,6 @@ app.post('/broadcast-signed-transaction', async (req, res) => {
     res.json({ transactionHash: receipt.transactionHash });
   } catch (error) {
     console.error('Error broadcasting transaction:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
-
-
-
-
-app.post('/generate-unsigned-transaction', async (req, res) => {
-  try {
-    // You can retrieve the recipient address and other transaction details from the request body
-    const { recipientAddress, value, transactionData, gasAmount } = req.body;
-
-
-    const transactionDetails = {
-      to: recipientAddress,
-      value: web3.utils.toWei(value.toString(), 'ether'), // Convert value to Wei
-      data: transactionData, // Replace with transaction data (if applicable)
-      gasLimit: 21000, // Example gas limit (customize as needed)
-    };
-//
-    //// Send the unsigned transaction data to the frontend
-    res.json({ unsignedTransaction: transactionDetails });
-  } catch (error) {
-    console.error('Error generating unsigned transaction:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
