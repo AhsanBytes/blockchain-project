@@ -6,7 +6,6 @@ import ABI from './ABI.json';
 
 const View = () => {
     const web3 = new Web3("https://goerli.infura.io/v3/4d9b1ef176d64df9b4484f44e626bc0d");
-    //Polygon Infura endpoint: https://polygon-mumbai.infura.io/v3/2a29079df7f1449a809beac5801ae4d5
     const contractAddress = "0xf30340148c22f07e5da8abb7e3b63af90e9ea346";
     const contract = new web3.eth.Contract(ABI, contractAddress);
     const address = sessionStorage.getItem('address');
