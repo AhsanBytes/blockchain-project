@@ -1,4 +1,38 @@
 const pool = require('../db-pool');
+const {contract}=require('../Contract/index');
+const contractAddress = "0xf30340148c22f07e5da8abb7e3b63af90e9ea346";
+
+const update_name = async (req, res) => {
+    try {
+      let { newName, userAddress } = req.body;
+  
+      // Remove extra characters from userAddress
+      userAddress = userAddress.replace(/"/g, '');
+  
+      // Ensure userAddress has '0x' prefix
+      if (!userAddress.startsWith('0x')) {
+        userAddress = '0x' + userAddress;
+      }
+      // Estimate gas
+      const gasAmount = await contract.methods.set_Name(newName).estimateGas({ from: userAddress });
+      const gasAmountString = gasAmount.toString();
+      // Encode transaction data
+      const data = await contract.methods.set_Name(newName).encodeABI();
+  
+      // Create transaction object
+      const transaction = {
+        from: userAddress,
+        to: contractAddress,
+        data: data,
+        gasLimit: gasAmountString,
+      };
+  
+      res.json({ transaction });
+    } catch (error) {
+      console.error('Error generating transaction:', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  };
 
  const get_Name = async (req,res)=>{
     pool.query("SELECT Name from properties WHERE ID=1", (error,result)=>{
@@ -106,8 +140,6 @@ const get_balance = async(req,res)=>{
         res.send(  account);
       };
 
-      
-
     
  module.exports = {
     get_Name,
@@ -115,7 +147,8 @@ const get_balance = async(req,res)=>{
     get_ID,
     get_Desc,
     get_balance,
-    get_all
+    get_all,
+    update_name
 //     deleteTask,
 //     viewTask,
 //     allTasks
