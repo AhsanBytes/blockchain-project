@@ -6,6 +6,7 @@ import ABI from './ABI.json';
 
 const View = () => {
     const web3 = new Web3("https://goerli.infura.io/v3/4d9b1ef176d64df9b4484f44e626bc0d");
+    //Polygon Infura endpoint: https://polygon-mumbai.infura.io/v3/2a29079df7f1449a809beac5801ae4d5
     const contractAddress = "0xf30340148c22f07e5da8abb7e3b63af90e9ea346";
     const contract = new web3.eth.Contract(ABI, contractAddress);
     const address = sessionStorage.getItem('address');
@@ -143,28 +144,28 @@ const View = () => {
             method: 'eth_sendTransaction',
             params: [transaction],
             })
-            .then((txHash) =>  sendSignedTransactionToBackend(transaction))
+            .then((txHash) => console.log(txHash) )
             .catch((error) => console.error(error));
-        
+        //sendSignedTransactionToBackend(transaction)
         }
     } catch (error) {
         console.error('Error in signAndSendTransaction:', error);
     }
     };
 
-    const sendSignedTransactionToBackend = async (signedTransaction) => {
-        try {
-            const response = await axios.post('http://localhost:3000/broadcast-signed-transaction', { signedTransaction });
-            console.log(response.data)
-            if (response.data && response.data.transactionHash) {
-                console.log('Transaction broadcasted. Transaction Hash:', response.data.transactionHash);
-            } else {
-                console.error('Failed to broadcast the transaction.');
-            }
-        } catch (error) {
-            console.error('Error sending signed transaction to the backend:', error);
-        }
-    };
+    // const sendSignedTransactionToBackend = async (signedTransaction) => {
+    //     try {
+    //         const response = await axios.post('http://localhost:3000/broadcast-signed-transaction', { signedTransaction });
+    //         console.log(response.data)
+    //         if (response.data ) {
+    //             console.log('Transaction broadcasted');
+    //         } else {
+    //             console.error('Failed to broadcast the transaction.');
+    //         }
+    //     } catch (error) {
+    //         console.error('Error sending signed transaction to the backend:', error);
+    //     }
+    // };
 
     // const UpdateName = async () => {
     //     try {
