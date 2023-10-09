@@ -11,7 +11,6 @@ const { get_Name, get_Token, get_ID, get_Desc, get_balance,get_all} = require('.
 const {fetchDataAndStore} = require('./cron-job');
 const contractAddress = "0xf30340148c22f07e5da8abb7e3b63af90e9ea346";
 
-
 cron.schedule('* * * * *', () => {
     console.log('Fetching data and updating database...');
     fetchDataAndStore();
@@ -99,16 +98,18 @@ app.post('/update-name', async (req, res) => {
 });
 
 
-app.post('/broadcast-signed-transaction', async (req, res) => {
-  try {
-    const { signedTransaction } = req.body;
-    const receipt = await web3.eth.sendSignedTransaction(signedTransaction.rawTransaction);
-    res.json({ transactionHash: receipt.transactionHash });
-  } catch (error) {
-    console.error('Error broadcasting transaction:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
+// app.post('/broadcast-signed-transaction', async (req, res) => {
+//   try {
+//     const { signedTransaction } = req.body;
+//     console.log(signedTransaction);
+//     //const receipt = await web3.eth.sendSignedTransaction(signedTransaction.rawTransaction);
+//     console.log(signedTransaction.rawTransaction);
+//     //res.json({ transactionHash: receipt.transactionHash });
+//   } catch (error) {
+//     console.error('Error broadcasting transaction:', error);
+//     res.status(500).json({ error: 'Internal server error' });
+//   }
+// });
 
 
 app.get("/api/get_Name", get_Name);
