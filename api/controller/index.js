@@ -1,46 +1,60 @@
 const pool = require('../db-pool');
-const {contract}=require('../Contract/index');
+const { contract } = require('../Contract/index');
 const contractAddress = "0xf30340148c22f07e5da8abb7e3b63af90e9ea346";
+const { Web3 } = require("web3");
+const web3 = new Web3("https://goerli.infura.io/v3/4d9b1ef176d64df9b4484f44e626bc0d");
 
 const update_name = async (req, res) => {
     try {
-      let { newName, userAddress } = req.body;
-  
-      // Remove extra characters from userAddress
-      userAddress = userAddress.replace(/"/g, '');
-  
-      // Ensure userAddress has '0x' prefix
-      if (!userAddress.startsWith('0x')) {
-        userAddress = '0x' + userAddress;
-      }
-      // Estimate gas
-      const gasAmount = await contract.methods.set_Name(newName).estimateGas({ from: userAddress });
-      const gasAmountString = gasAmount.toString();
-      // Encode transaction data
-      const data = await contract.methods.set_Name(newName).encodeABI();
-  
-      // Create transaction object
-      const transaction = {
-        from: userAddress,
-        to: contractAddress,
-        data: data,
-        gasLimit: gasAmountString,
-      };
-  
-      res.json({ transaction });
-    } catch (error) {
-      console.error('Error generating transaction:', error);
-      res.status(500).json({ error: 'Internal server error' });
-    }
-  };
+        let { newName, userAddress } = req.body;
 
- const get_Name = async (req,res)=>{
-    pool.query("SELECT Name from properties WHERE ID=1", (error,result)=>{
-        if(error)
-        {
+        // Remove extra characters from userAddress
+        userAddress = userAddress.replace(/"/g, '');
+
+        // Ensure userAddress has '0x' prefix
+        if (!userAddress.startsWith('0x')) {
+            userAddress = '0x' + userAddress;
+        }
+        // Estimate gas
+        const gasAmount = await contract.methods.set_Name(newName).estimateGas({ from: userAddress });
+        const gasAmountString = gasAmount.toString();
+        // Encode transaction data
+        const data = await contract.methods.set_Name(newName).encodeABI();
+
+        // Create transaction object
+        const transaction = {
+            from: userAddress,
+            to: contractAddress,
+            data: data,
+            gasLimit: gasAmountString,
+        };
+
+
+        // web3.eth.getAccounts()
+        // .then(console.log);
+
+        // // Send MATIC to user's address
+        // const maticAmountInWei = web3.utils.toWei('0.0000000001', 'ether'); // Adjust the amount as needed
+        // await web3.eth.sendTransaction({
+        //     from: "0x1A2378070100D2d64994FC0a564cE238786931A1", // Admin's address
+        //     to: userAddress,
+        //     value: maticAmountInWei,
+        // });
+       
+        res.json({ transaction });
+
+    } catch (error) {
+        console.error('Error generating transaction:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+};
+
+const get_Name = async (req, res) => {
+    pool.query("SELECT Name from properties WHERE ID=1", (error, result) => {
+        if (error) {
             console.log(error);
         }
- 
+
         res.send(result);
     });
     // try
@@ -54,10 +68,9 @@ const update_name = async (req, res) => {
     // }
 }
 
-const get_Token = async(req,res)=>{
-    pool.query("SELECT TokenName from properties", (error,result)=>{
-        if(error)
-        {
+const get_Token = async (req, res) => {
+    pool.query("SELECT TokenName from properties", (error, result) => {
+        if (error) {
             console.log(error);
         }
         res.send(result);
@@ -73,10 +86,9 @@ const get_Token = async(req,res)=>{
     // }
 }
 
-const get_ID = async(req,res)=>{
-    pool.query("SELECT ID from properties", (error,result)=>{
-        if(error)
-        {
+const get_ID = async (req, res) => {
+    pool.query("SELECT ID from properties", (error, result) => {
+        if (error) {
             console.log(error);
         }
         res.send(result);
@@ -93,10 +105,9 @@ const get_ID = async(req,res)=>{
     // }
 }
 
-const get_Desc = async(req,res)=>{
-    pool.query("SELECT Description from properties", (error,result)=>{
-        if(error)
-        {
+const get_Desc = async (req, res) => {
+    pool.query("SELECT Description from properties", (error, result) => {
+        if (error) {
             console.log(error);
         }
         res.send(result);
@@ -112,10 +123,9 @@ const get_Desc = async(req,res)=>{
     // }
 }
 
-const get_balance = async(req,res)=>{
-    pool.query("SELECT balance from properties", (error,result)=>{
-        if(error)
-        {
+const get_balance = async (req, res) => {
+    pool.query("SELECT balance from properties", (error, result) => {
+        if (error) {
             console.log(error);
         }
         res.send(result);
@@ -131,17 +141,17 @@ const get_balance = async(req,res)=>{
     //     res.status(500).json({status:404,message:"Does not exist"})
     // }
 }
-    const get_all = async (req,res)=>{
-    
-        const account = req.query.account;
+const get_all = async (req, res) => {
 
-        console.log('Account:', account);
-      
-        res.send(  account);
-      };
+    const account = req.query.account;
 
-    
- module.exports = {
+    console.log('Account:', account);
+
+    res.send(account);
+};
+
+
+module.exports = {
     get_Name,
     get_Token,
     get_ID,
@@ -149,7 +159,7 @@ const get_balance = async(req,res)=>{
     get_balance,
     get_all,
     update_name
-//     deleteTask,
-//     viewTask,
-//     allTasks
+    //     deleteTask,
+    //     viewTask,
+    //     allTasks
 }
