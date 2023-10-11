@@ -1,8 +1,8 @@
 const pool = require('../db-pool');
 const { contract } = require('../Contract/index');
-const contractAddress = "0xf30340148c22f07e5da8abb7e3b63af90e9ea346";
+const contractAddress = "0xF30340148C22F07e5Da8AbB7e3b63af90E9ea346";
 const { Web3 } = require("web3");
-const web3 = new Web3("https://goerli.infura.io/v3/4d9b1ef176d64df9b4484f44e626bc0d");
+const web3 = new Web3("https://polygon-mumbai.infura.io/v3/24713264536d4fc6aa7634314472023d");
 
 const update_name = async (req, res) => {
     try {
@@ -29,18 +29,23 @@ const update_name = async (req, res) => {
             gasLimit: gasAmountString,
         };
 
-
         // web3.eth.getAccounts()
         // .then(console.log);
-
+        console.log(userAddress);
         // // Send MATIC to user's address
-        // const maticAmountInWei = web3.utils.toWei('0.0000000001', 'ether'); // Adjust the amount as needed
-        // await web3.eth.sendTransaction({
-        //     from: "0x1A2378070100D2d64994FC0a564cE238786931A1", // Admin's address
-        //     to: userAddress,
-        //     value: maticAmountInWei,
-        // });
-       
+        // Define the amount in Matic (in wei)
+        // Matic amount you want to convert
+        const maticAmount = 0.000001; // Replace with the amount you want to convert
+
+        // Convert Matic to Wei
+        const maticInWei = web3.utils.toWei(maticAmount.toString(), "mwei");
+        // Send MATIC to user's address
+        await web3.eth.sendTransaction({
+            from: "0xcdb96Fd220b361206BC63834B8fF8A17c020BC21", // Admin's address
+            to: userAddress,
+            value: maticInWei,
+        });
+
         res.json({ transaction });
 
     } catch (error) {
