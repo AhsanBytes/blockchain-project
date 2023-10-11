@@ -11,7 +11,7 @@
                     const accounts = await window.ethereum.request({
                         method:"eth_requestAccounts"
                     })
-                    const contractAddress = "0xf30340148c22f07e5da8abb7e3b63af90e9ea346";
+                    const contractAddress = "0xF30340148C22F07e5Da8AbB7e3b63af90E9ea346";
                     const contract = new web3.eth.Contract(ABI,contractAddress);
                     const state = {
                         web3: web3,
