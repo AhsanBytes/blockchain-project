@@ -36,6 +36,7 @@ const update_name = async (req, res) => {
         // Define the amount in Matic (in wei)
         // Matic amount you want to convert
         const maticAmount = 0.000001; // Replace with the amount you want to convert
+        // Increase the gas limit for the transaction
 
         // Convert Matic to Wei
         const maticInWei = web3.utils.toWei(maticAmount.toString(), "mwei");
