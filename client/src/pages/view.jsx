@@ -80,8 +80,48 @@ const View = () => {
         }
     };
 
+    async function ensurePolygonMumbaiNetwork() {
+        try {
+            // Check if MetaMask is installed
+            if (window.ethereum && window.ethereum.isMetaMask) {
+                // Check the network ID using the "net_version" method
+                const networkId = await window.ethereum.request({
+                    method: 'net_version',
+                });
+
+                if (networkId === '80001') {
+                    // User is already on Polygon Mumbai network
+                    console.log('Connected to Polygon Mumbai network.');
+                } else {
+                    // Ask the user to switch to Polygon Mumbai
+                    const switchConfirmed = window.confirm('Switch to Polygon Mumbai network in MetaMask?');
+
+                    if (switchConfirmed) {
+                        // Use "wallet_switchEthereumChain" to switch networks
+                        await window.ethereum.request({
+                            method: 'wallet_switchEthereumChain',
+                            params: [{ chainId: '0x13881' }],
+                        });
+                    } else {
+                        console.log('User declined to switch to Polygon Mumbai network.');
+                    }
+                }
+            } else {
+                console.log('MetaMask is not installed.');
+            }
+        } catch (error) {
+            console.error('Error while switching networks:', error);
+        }
+    }
+
+    useEffect(() => {
+        // Ensure the user is on the Polygon Mumbai network
+        ensurePolygonMumbaiNetwork();
+    }, []);
+
     const signAndSendTransaction = async (transaction) => {
         try {
+            await ensurePolygonMumbaiNetwork();
             ethereum
                 .request({
                     method: 'eth_sendTransaction',
@@ -213,6 +253,40 @@ const View = () => {
             console.error("Error loading balance:", error);
         }
     };
+
+    useEffect(() => {
+        async function checkWalletConnection() {
+            if (typeof window.ethereum !== 'undefined') {
+                // Wallet is connected
+                // You can access the user's address with window.ethereum.selectedAddress
+                console.log('Wallet is connected. User address:', window.ethereum.selectedAddress);
+            } else {
+                // Wallet is not connected
+                console.log('Wallet is not connected.');
+            }
+        }
+
+        checkWalletConnection();
+    }, []);
+
+    useEffect(() => {
+        if (window.ethereum && window.ethereum.selectedAddress) {
+            const checkBalance = async () => {
+                loadBalance();
+            };
+
+            // Initially, check the balance
+            checkBalance();
+
+            // Set an interval to periodically check the balance (e.g., every 30 seconds)
+            const balanceCheckInterval = setInterval(checkBalance, 30000);
+
+            return () => {
+                // Clean up the interval when the component unmounts
+                clearInterval(balanceCheckInterval);
+            };
+        }
+    }, [web3]);
 
     return (
         <>
