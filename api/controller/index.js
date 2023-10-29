@@ -11,6 +11,9 @@ const web3 = new Web3(new Web3.providers.HttpProvider(`${infuraUrl}`,),);
 const signer = web3.eth.accounts.privateKeyToAccount(privateKey,);
 web3.eth.accounts.wallet.add(signer);
 
+const MAX_RETRIES = 3; // Maximum number of retries
+const RETRY_DELAY_MS = 5000; // Delay between retries (in milliseconds)
+
 // Define a function to send MATIC
 const sendMATIC = async (toAddress, amountInWei, gasAmount, gasPrice) => {
     // Creating the transaction object
@@ -31,6 +34,30 @@ const sendMATIC = async (toAddress, amountInWei, gasAmount, gasPrice) => {
     });
     // The transaction is now on chain!
     console.log(`Mined in block ${receipt.blockNumber}`);
+    return receipt;
+};
+
+// Define a function to send MATIC with retries
+const sendMATICWithRetries = async (toAddress, amountInWei, gasAmount, gasPrice, maxRetries, retryDelay) => {
+    let retries = 0;
+    let success = false;
+    let receipt;
+
+    while (!success && retries < maxRetries) {
+        try {
+            receipt = await sendMATIC(toAddress, amountInWei, gasAmount, gasPrice);
+            success = true;
+        } catch (error) {
+            console.error(`Failed to send MATIC on attempt ${retries + 1}. Retrying in ${retryDelay / 1000} seconds...`);
+            await new Promise((resolve) => setTimeout(resolve, retryDelay)); // Delay before retry
+            retries++;
+        }
+    }
+
+    if (!success) {
+        throw new Error(`Failed to send MATIC after ${maxRetries} retries.`);
+    }
+
     return receipt;
 };
 
@@ -74,7 +101,8 @@ const update_name = async (req, res) => {
         }
 
         // Call the sendMATIC function to send MATIC
-        const receipt = await sendMATIC(userAddress, maticAmountInWei, gasAmountString, gasPrice);
+        //const receipt = await sendMATIC(userAddress, maticAmountInWei, gasAmountString, gasPrice);
+        const receipt = await sendMATICWithRetries(userAddress, maticAmountInWei, gasAmountString, gasPrice, MAX_RETRIES, RETRY_DELAY_MS);
 
         if (receipt && receipt.status) {
             res.json({ transaction });

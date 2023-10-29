@@ -1,2 +1,3 @@
 api/.env
-api/.env
+api/Contract/ABI.json
+api/Contract/index.js
