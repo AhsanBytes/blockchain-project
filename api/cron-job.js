@@ -1,11 +1,12 @@
 const {contract}=require('./Contract/index');
 const pool = require('./db-pool');
+const cron = require('node-cron');
 
 async function fetchDataAndStore() {
   try {
     const name = await contract.methods.Name().call();
     console.log(name);
-    const tokenName = await contract.methods.TokenName().call();
+    const tokenName = await contract.methods.TokenName().call(); 
     console.log(tokenName);
 
     let id = await contract.methods.ID().call();
@@ -26,11 +27,19 @@ async function fetchDataAndStore() {
   }
 }
 
-module.exports={
-    fetchDataAndStore
+function Cron() 
+{
+  cron.schedule('* * * * *', () => {
+    console.log('Fetching data and updating database...');
+    fetchDataAndStore();
+  });
+  
+  process.on('exit', () => {
+    pool.end();
+    console.log('Cron job stopped.');
+  });
 }
 
-
-
-
-
+module.exports={
+    Cron
+}

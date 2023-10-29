@@ -5,12 +5,11 @@ import View from './pages/view';
 import './index.css';
 
 function App() {
-  const [state, setState] = useState({web3:null, contract: null, account:null})
+  const [state, setState] = useState({account:null})
 
-  const saveState = ({web3,contract,account}) => {
-    setState({web3: web3, contract: contract, account: account})
+  const saveState = ({account}) => {
+    setState({account: account})
   }
-
 
   const router = createBrowserRouter(
     [
