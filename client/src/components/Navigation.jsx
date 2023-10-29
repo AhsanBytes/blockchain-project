@@ -10,31 +10,11 @@ const Navigation =()=>{
                 Wallet
               </Link>
             </li>
-            {/* <li>
-              <Link className="nav_link" to="/view-all-tasks">
-                View All Tasks
-              </Link>
-            </li> */}
-            {/* <li>
-              <Link className="nav_link" to="/create-task">
-                Create Task
-              </Link>
-            </li> */}
             <li>
               <Link className="nav_link" to="/view">
                 View
               </Link>
             </li>
-            {/* <li>
-              <Link className="nav_link" to="/update-task">
-                Update Task
-              </Link>
-            </li>
-            <li>
-              <Link className="nav_link" to="/delete-task">
-                Delete Task
-              </Link>
-            </li> */}
           </ul>
         </nav>
       </header>
