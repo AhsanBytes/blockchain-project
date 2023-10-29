@@ -20,7 +20,7 @@ const View = () => {
     const [EditBalance, setEditBalance] = useState(null);
     const storedState = sessionStorage.getItem('address'); // Replace with your chosen key
     const [walletbalance, setWalletBalance] = useState(null);
-
+    const [loading, setLoading] = useState(false);
 
     const handleNameChange = (event) => {
         const newValue = event.target.value;
@@ -54,6 +54,7 @@ const View = () => {
 
     const sendNewNameToBackend = async () => {
         try {
+            setLoading(true);
             if (address) {
                 const response = await axios.post('http://localhost:3000/api/update-name', {
                     newName: EditName,
@@ -74,32 +75,32 @@ const View = () => {
         } catch (error) {
             console.error('Error sending new name to the backend:', error);
         }
+        finally {
+            setLoading(false);
+        }
     };
 
     const signAndSendTransaction = async (transaction) => {
         try {
-            if (contract && address) {
-                ethereum
-                    .request({
-                        method: 'eth_sendTransaction',
-                        params: [transaction],
-                    })
-                    .then((txHash) => console.log(txHash))
-                    .catch((error) => console.error(error));
-                //sendSignedTransactionToBackend(transaction)
-            }
+            ethereum
+                .request({
+                    method: 'eth_sendTransaction',
+                    params: [transaction],
+                })
+                .then((txHash) => console.log(txHash))
+                .catch((error) => console.error(error));
         } catch (error) {
             console.error('Error in signAndSendTransaction:', error);
         }
     };
 
-    const UpdateId = () => {console.log("Only Update Name Function is Functional")}
+    const UpdateId = () => { console.log("Only Update Name Function is Functional") }
 
-    const Updatebalance = () => {console.log("Only Update Name Function is Functional")}
+    const Updatebalance = () => { console.log("Only Update Name Function is Functional") }
 
-    const UpdateTokenName = async () => {console.log("Only Update Name Function is Functional")}
+    const UpdateTokenName = async () => { console.log("Only Update Name Function is Functional") }
 
-    const UpdateDescription = async () => {console.log("Only Update Name Function is Functional")}
+    const UpdateDescription = async () => { console.log("Only Update Name Function is Functional") }
 
     const fetchName = async () => {
         try {
@@ -255,6 +256,13 @@ const View = () => {
                 </div>
 
             </div >
+            {loading && (
+                <div className="absolute top-0 left-0 flex items-center justify-center w-full h-full bg-black bg-opacity-70 z-50">
+                    <div className="text-white p-4 bg-blue-400 rounded-lg">
+                        Sending MATIC and Processing Transaction...
+                    </div>
+                </div>
+            )}
         </>
     );
 };
