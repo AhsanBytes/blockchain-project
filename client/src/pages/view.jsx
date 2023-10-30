@@ -1,12 +1,9 @@
 import { useState, useEffect } from "react";
-import Navigation from "../components/Navigation";
-import Web3 from 'web3';
 import axios from 'axios';
 
 const View = () => {
     const address = sessionStorage.getItem('address');
     const tempaddress = JSON.parse(address);
-    const web3 = new Web3("https://polygon-mumbai.infura.io/v3/24713264536d4fc6aa7634314472023d");
 
     const [Name, setName] = useState('');
     const [ID, setID] = useState(null);
@@ -18,7 +15,7 @@ const View = () => {
     const [EditTokenName, setEditTokenName] = useState('');
     const [EditDescription, setEditDescription] = useState('');
     const [EditBalance, setEditBalance] = useState(null);
-    const storedState = sessionStorage.getItem('address'); // Replace with your chosen key
+    const storedState = sessionStorage.getItem('address');
     const [walletbalance, setWalletBalance] = useState(null);
     const [loading, setLoading] = useState(false);
 
@@ -238,23 +235,6 @@ const View = () => {
     };
 
     useEffect(() => {
-        if (address) {
-            loadBalance();
-        }
-    }, [address]);
-
-    const loadBalance = async () => {
-        try {
-            const balanceWei = await web3.eth.getBalance(tempaddress);
-            // Convert wei to Matic (1 Matic = 10^18 wei)
-            const balanceMATIC = web3.utils.fromWei(balanceWei, "wei") / Math.pow(10, 18);
-            setWalletBalance(balanceMATIC);
-        } catch (error) {
-            console.error("Error loading balance:", error);
-        }
-    };
-
-    useEffect(() => {
         async function checkWalletConnection() {
             if (typeof window.ethereum !== 'undefined') {
                 // Wallet is connected
@@ -269,24 +249,30 @@ const View = () => {
         checkWalletConnection();
     }, []);
 
-    useEffect(() => {
-        if (window.ethereum && window.ethereum.selectedAddress) {
-            const checkBalance = async () => {
-                loadBalance();
-            };
-
-            // Initially, check the balance
-            checkBalance();
-
-            // Set an interval to periodically check the balance (e.g., every 30 seconds)
-            const balanceCheckInterval = setInterval(checkBalance, 30000);
-
-            return () => {
-                // Clean up the interval when the component unmounts
-                clearInterval(balanceCheckInterval);
-            };
+    const wallet_balance = async () => {
+        if (tempaddress) {
+            const response = await axios.post('http://localhost:3000/api/get_wallet_balance', {
+                Address: tempaddress,
+            });
+            console.log(response.data)
+            const { balance } = response.data;
+            setWalletBalance(balance);
         }
-    }, [web3]);
+    }
+
+    // Set an interval to periodically check the balance (e.g., every 30 seconds)
+    const balanceCheckInterval = setInterval(() => {
+        wallet_balance();
+    }, 30000);
+
+    useEffect(() => {
+        wallet_balance();
+
+        // Ensure to clear the interval when your component unmounts
+        return () => {
+            clearInterval(balanceCheckInterval);
+        };
+    }, []);
 
     return (
         <>
