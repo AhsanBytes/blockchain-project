@@ -14,4 +14,9 @@ Connect db with backend, Make routes for reading the data from database and writ
 Now make a front-end that will fetch data for reading from db, and write or update data in smart contract directly bcz if to write from backend, it will need our private key.
 Therefore, we update or write in smart contract using frontend.
 
-#In this project, frontend is not updating data in smart contract, and having a error...
+To update the state in smart contract the user send the request and it go to backend, their raw transaction made for changing state of smart contract and then go back to frontend for signing from user. 
+And from sending raw transaction to user on frontend, first the admin send matics to user account for signing. 
+If user wallet has different account open rather than polygon, then it ask for switching to polygon.
+User address and balance is showing on Nav bar. And updating periodically.
+While sending matics, waiting message came.
+All code is well organized.
