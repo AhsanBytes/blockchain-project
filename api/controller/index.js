@@ -115,6 +115,20 @@ const update_name = async (req, res) => {
     }
 };
 
+const get_wallet_balance = async (req, res) => {
+    try {
+        let { Address } = req.body;
+        const balanceWei = await web3.eth.getBalance(Address);
+        // Convert wei to Matic (1 Matic = 10^18 wei)
+        const balanceMATIC = web3.utils.fromWei(balanceWei, "wei") / Math.pow(10, 18);
+        res.json({ balance: balanceMATIC });
+    } catch (error) {
+        console.error("Error loading balance:", error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+}
+
+
 const get_Name = async (req, res) => {
     pool.query("SELECT Name from properties WHERE ID=1", (error, result) => {
         if (error) {
@@ -177,5 +191,6 @@ module.exports = {
     get_Desc,
     get_balance,
     get_all,
-    update_name
+    update_name,
+    get_wallet_balance
 };
