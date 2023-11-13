@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import axios from 'axios';
+import Stripe from "react-stripe-checkout";
 
 const View = () => {
     const address = sessionStorage.getItem('address');
@@ -18,6 +19,9 @@ const View = () => {
     const storedState = sessionStorage.getItem('address');
     const [walletbalance, setWalletBalance] = useState(null);
     const [loading, setLoading] = useState(false);
+    const [pkiUnits, setPKIUnits] = useState(0);
+    const [processing, setprocessing] = useState(false);
+
 
     const handleNameChange = (event) => {
         const newValue = event.target.value;
@@ -249,30 +253,110 @@ const View = () => {
         checkWalletConnection();
     }, []);
 
-    const wallet_balance = async () => {
-        if (tempaddress) {
-            const response = await axios.post('http://localhost:3000/api/get_wallet_balance', {
-                Address: tempaddress,
-            });
-            console.log(response.data)
-            const { balance } = response.data;
-            setWalletBalance(balance);
+    const fetchWalletBalance = async () => {
+        try {
+            if (tempaddress) {
+                const response = await axios.post('http://localhost:3000/api/get_wallet_balance', {
+                    Address: tempaddress,
+                });
+                const { balance } = response.data;
+    
+                // Only update state if the value has changed
+                if (balance !== walletbalance) {
+                    setWalletBalance(balance);
+                }
+            }
+        } catch (error) {
+            console.error("Error loading wallet balance: ", error);
         }
-    }
-
-    // Set an interval to periodically check the balance (e.g., every 30 seconds)
-    const balanceCheckInterval = setInterval(() => {
-        wallet_balance();
-    }, 30000);
-
+    };
+    
     useEffect(() => {
-        wallet_balance();
-
+        // Call the function to get wallet balance initially
+        fetchWalletBalance();
+    
+        // Set an interval to periodically check the balance (e.g., every 30 seconds)
+        let balanceCheckInterval;
+    
+        if (tempaddress) {
+            balanceCheckInterval = setInterval(() => {
+                fetchWalletBalance();
+            }, 30000);
+        }
+    
         // Ensure to clear the interval when your component unmounts
         return () => {
             clearInterval(balanceCheckInterval);
         };
-    }, []);
+    }, [tempaddress, walletbalance]); // Dependency array ensures the effect runs when tempaddress or walletBalance change    
+
+    const tokenHandler = (token) => {
+        handleToken(100, token); // Change 100 to the actual amount
+    };
+
+    const handleToken = async (totalAmount, token) => {
+        try {
+            if (tempaddress) {
+                setprocessing(true);
+
+                // Send a single POST request to handle both Stripe payment and PKIUnits update
+                const response = await axios.post("http://localhost:3000/api/stripe/pay", {
+                    token: token.id,
+                    amount: totalAmount,
+                    address: tempaddress
+                });
+
+                setprocessing(false);
+
+                if (response.data.success) {
+                    // Payment and PKIUnits update successful
+                    console.log("Payment and PKIUnits update successful!");
+                    getPKIUnits(); // Refresh PKIUnits after successful update
+                } else {
+                    // Payment or update failed
+                    console.error("Payment or PKIUnits update failed");
+                }
+            }
+        } catch (error) {
+            console.log(error);
+            setprocessing(false);
+        }
+    };
+
+    useEffect(() => {
+        // Function to get PKIUnits
+        const fetchPKIUnits = async () => {
+            if (tempaddress) {
+                try {
+                    const response = await axios.post('http://localhost:3000/api/get_PKIUnits', {
+                        Address: tempaddress,
+                    });
+                    const { getpki } = response.data;
+
+                    // Only update state if the value has changed
+                    if (getpki !== pkiUnits) {
+                        setPKIUnits(getpki);
+                    }
+                } catch (error) {
+                    console.error("Error loading pkiunits balance: ", error);
+                }
+            }
+        };
+
+        // Call the function to get PKIUnits initially
+        fetchPKIUnits();
+
+        // Set an interval to periodically check the pkiunits (e.g., every 30 seconds)
+        const pkiunitsCheckInterval = setInterval(() => {
+            fetchPKIUnits();
+        }, 30000);
+
+        // Ensure to clear the interval when your component unmounts
+        return () => {
+            clearInterval(pkiunitsCheckInterval);
+        };
+    }, [tempaddress, pkiUnits]); // Dependency array ensures the effect runs when tempaddress or pkiUnits change
+
 
     return (
         <>
@@ -280,6 +364,17 @@ const View = () => {
                 <h1 className="text-white">Blockchain App</h1>
                 <h1 className="text-white text-center">Wallet Address: {tempaddress}</h1>
                 <h1 className="text-white text-center">Balance: {walletbalance} MATICS</h1>
+                <div className="absolute top-0 right-0 mt-2.5 mr-20 text-white flex flex-col items-end">
+                    <div className="mb-2">PKIUnits: {pkiUnits} PKI</div>
+                    <Stripe
+                        stripeKey="pk_test_51OBe5OBaR9sAqK9kanzio0mACH0yLibTzYfb5B5VY5pIqFslShcpBAmlbAR4KJti6SMP6o6vqJpVXdaaW2aC1cwZ00P0KJ46CP"
+                        token={tokenHandler}
+                    >
+                        <button className={`bg-green-500 text-white py-1 px-2 rounded ${processing ? 'cursor-not-allowed opacity-50' : ''}`}>
+                            {processing ? 'Processing...' : 'Add PKIUnits'}
+                        </button>
+                    </Stripe>
+                </div>
             </div>
 
             <div className="flex items-center justify-center md:m-20 bg-slate-100 p-10 rounded-xl">

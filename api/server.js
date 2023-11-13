@@ -7,6 +7,7 @@ const app = express();
 app.use(express.json());
 Cron();
 app.use(cors());
+app.use(express.urlencoded({extended: true}));
 app.use('/api', tasks);
 
 const PORT = 3000;

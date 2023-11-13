@@ -33,7 +33,7 @@ const Wallet = ({ saveState }) => {
             <div className='h-20 bg-blue-500 text-white'>
                 <div >
                     <div className=" flex text-lg p-5">
-                        <span>WELCOME TO</span> <p>Project3.0</p>
+                        <span>WELCOME TO</span> <p> Project3.0</p>
                     </div>
                     <div className="m-20 flex items-center justify-center">
                         <p className='text-black m-5'> Please connect metamask wallet to access the app </p>

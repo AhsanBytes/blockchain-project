@@ -1,11 +1,16 @@
 require('dotenv').config();
+const { v4: uuidv4 } = require('uuid');
 const { Web3 } = require("web3");
 const pool = require('../db-pool');
-const { contract } = require('../Contract/index');
+const { contract, pkicontract } = require('../Contract/index');
+const stripe_secret_key = process.env.STRIPE_SECRET_KEY;
 const privateKey = process.env.PRIVATE_KEY;
+const pkicontractAddress = process.env.PKIUNITS_CONTRACT_ADDRESS;
 const contractAddress = process.env.CONTRACT_ADDRESS;
 const infuraUrl = process.env.INFURA_URL;
 const web3 = new Web3(new Web3.providers.HttpProvider(`${infuraUrl}`,),);
+const stripe = require("stripe")(stripe_secret_key);
+
 
 // Creating a signing account from a private key
 const signer = web3.eth.accounts.privateKeyToAccount(privateKey,);
@@ -128,6 +133,70 @@ const get_wallet_balance = async (req, res) => {
     }
 }
 
+const get_PKIUnits = async (req, res) => {
+    try {
+        let { Address } = req.body;
+        if (!pkicontract) {
+            throw new Error('PKIUnits contract not initialized.');
+        }
+        let getpki = await pkicontract.methods.balanceOf(Address).call();
+        getpki = Number(getpki);
+        res.json({ getpki });
+    } catch (error) {
+        console.error("Error loading pkiunits balance: ", error);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+}
+
+const get_stripe = (req, res, next) => {
+    console.log("Get Response from researcher");
+    res.json({
+        message: 'It Works'
+    });
+}
+
+const pay_stripe_and_update_pki = async (req, res, next) => {
+    try {
+        const { token, amount, address } = req.body;
+
+        // Handle the Stripe payment
+        const stripeResponse = await payStripe(token, amount);
+        // Check if the Stripe payment was successful
+        if (stripeResponse.status === 'succeeded') {
+            // Calculate PKIUnits based on the exchange rate (1 USD = 1.5 PKI)
+            const exchangeRate = 1.5;
+            const pkiUnitsToAdd = amount * exchangeRate;
+            // Add PKIUnits to the user's account
+            await pkicontract.methods.transfer(address, pkiUnitsToAdd).send({ from: pkicontractAddress });
+
+            res.status(200).json({
+                success: true,
+                getpki: pkiUnitsToAdd,
+            });
+        } else {
+            throw new Error('Stripe payment failed.');
+        }
+    } catch (error) {
+        console.error('Error processing payment and updating PKIUnits:', error);
+        res.status(500).json({ success: false, error: 'Internal server error' });
+    }
+};
+
+const payStripe = async (token,amount) => {
+    const idempotencyKey = uuidv4();
+
+    return stripe.customers.create({
+        email: token.email,
+        source: token
+    }).then(customer => {
+        return stripe.charges.create({
+            amount: amount * 100,
+            currency: 'usd',
+            customer: customer.id,
+            receipt_email: token.email
+        }, { idempotencyKey });
+    });
+};
 
 const get_Name = async (req, res) => {
     pool.query("SELECT Name from properties WHERE ID=1", (error, result) => {
@@ -183,7 +252,6 @@ const get_all = async (req, res) => {
     res.send(account);
 };
 
-
 module.exports = {
     get_Name,
     get_Token,
@@ -192,5 +260,8 @@ module.exports = {
     get_balance,
     get_all,
     update_name,
-    get_wallet_balance
+    get_wallet_balance,
+    get_PKIUnits,
+    get_stripe,
+    pay_stripe_and_update_pki
 };
