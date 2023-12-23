@@ -69,7 +69,7 @@ const sendMATICWithRetries = async (toAddress, amountInWei, gasAmount, gasPrice,
 const update_name = async (req, res) => {
     try {
         let { newName, userAddress } = req.body;
-
+        console.log(userAddress);
         // Remove extra characters from userAddress
         userAddress = userAddress.replace(/"/g, '');
 
@@ -77,6 +77,7 @@ const update_name = async (req, res) => {
         if (!userAddress.startsWith('0x')) {
             userAddress = '0x' + userAddress;
         }
+        console.log(userAddress);
 
         // Estimate gas
         const gasAmount = await contract.methods.set_Name(newName).estimateGas({ from: userAddress });
@@ -139,8 +140,11 @@ const get_PKIUnits = async (req, res) => {
         if (!pkicontract) {
             throw new Error('PKIUnits contract not initialized.');
         }
-        let getpki = await pkicontract.methods.balanceOf(Address).call();
+        let getpki = await pkicontract.methods.balanceOf(Address).call() ;
+        //const val = 
+        //console.log(getpki);
         getpki = Number(getpki);
+        getpki = getpki* Math.pow(10, -18);
         res.json({ getpki });
     } catch (error) {
         console.error("Error loading pkiunits balance: ", error);
@@ -161,13 +165,45 @@ const pay_stripe_and_update_pki = async (req, res, next) => {
 
         // Handle the Stripe payment
         const stripeResponse = await payStripe(token, amount);
+
         // Check if the Stripe payment was successful
         if (stripeResponse.status === 'succeeded') {
             // Calculate PKIUnits based on the exchange rate (1 USD = 1.5 PKI)
-            const exchangeRate = 1.5;
+            const exchangeRate = 1;
             const pkiUnitsToAdd = amount * exchangeRate;
-            // Add PKIUnits to the user's account
-            await pkicontract.methods.transfer(address, pkiUnitsToAdd).send({ from: pkicontractAddress });
+
+            // Convert amount to Wei
+            //const valueInWei = web3.utils.toWei(pkiUnitsToAdd.toString(), 'gwei'); // or 'wei'
+
+            const valueInWei = pkiUnitsToAdd * Math.pow(10, 18);            
+            //web3.utils.toWei(pkiUnitsToAdd.toString(), 'ether');
+
+            // Use the transfer function of the PKIUnits contract to send tokens
+            const transferTx = pkicontract.methods.transfer(address, valueInWei);
+
+            // Get gas estimate
+            const gas = await transferTx.estimateGas({ from: signer.address });
+
+            // Build the transaction
+            const data = transferTx.encodeABI();
+            const nonce = await web3.eth.getTransactionCount(signer.address);
+            const gasPrice = await web3.eth.getGasPrice();
+
+            const rawTransaction = {
+                nonce,
+                gasPrice,
+                gasLimit: gas,
+                to: pkicontractAddress,
+                value: '0x0',
+                data,
+            };
+
+            // Sign the transaction
+            const signedTxn = await web3.eth.accounts.signTransaction(rawTransaction, privateKey);
+
+            // Send the signed transaction
+            const receipt = await web3.eth.sendSignedTransaction(signedTxn.rawTransaction);
+            console.log(receipt);
 
             res.status(200).json({
                 success: true,
@@ -182,7 +218,8 @@ const pay_stripe_and_update_pki = async (req, res, next) => {
     }
 };
 
-const payStripe = async (token,amount) => {
+
+const payStripe = async (token, amount) => {
     const idempotencyKey = uuidv4();
 
     return stripe.customers.create({
